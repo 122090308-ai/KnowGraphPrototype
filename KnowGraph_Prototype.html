@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KnowGraph · 交互原型</title>
+<style>
+:root {
+  --bg:#f4f6fb;--surface:#fff;--surface2:#f0f2f9;--surface3:#e8eaf4;
+  --accent:#5b5bd6;--accent2:#7c6ff7;--accent3:#0ea5e9;
+  --green:#10b981;--yellow:#f59e0b;--red:#ef4444;--pink:#e879a0;
+  --text:#1e2235;--muted:#64748b;--muted2:#8898a8;--border:#e2e5f0;
+  --r:10px;--font:'PingFang SC','Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px}
+.topnav{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:fixed;top:0;left:0;right:0;z-index:1000;box-shadow:0 1px 6px rgba(91,91,214,0.08)}
+.logo{font-size:16px;font-weight:800;color:var(--accent)}.logo span{color:var(--accent3)}
+.nav-tabs{display:flex;gap:4px}
+.ntab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--muted2);transition:all .2s;border:1px solid transparent}
+.ntab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(91,91,214,.25)}
+.ntab:hover:not(.active){background:var(--surface2);color:var(--text)}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--pink));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer}
+.page{display:none;margin-top:52px}
+.page.show{display:block}
+.layout{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:12px 0;position:fixed;top:52px;left:0;bottom:0;overflow-y:auto;z-index:100}
+.stitle{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:10px 16px 4px;margin-top:6px}
+.sitem{display:flex;align-items:center;gap:9px;padding:8px 16px;color:var(--muted2);cursor:pointer;font-size:13px;border-left:3px solid transparent;transition:all .15s}
+.sitem:hover{background:var(--surface2);color:var(--text)}
+.sitem.active{color:var(--accent);border-left-color:var(--accent);background:rgba(91,91,214,0.07)}
+.sbadge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.content{margin-left:220px;padding:22px;flex:1;min-width:0}
+.cheader{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.ptitle{font-size:20px;font-weight:700;color:#fff}
+.psub{font-size:13px;color:var(--muted2);margin-top:2px}
+.btn{padding:7px 14px;border-radius:7px;font-size:13px;cursor:pointer;border:none;font-family:var(--font);transition:all .2s}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent2)}
+.btn-g{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-g:hover{background:var(--surface2);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.slabel{font-size:12px;color:var(--muted2);margin-bottom:5px}
+.sval{font-size:24px;font-weight:800;color:#fff}
+.schange{font-size:11px;margin-top:3px}.up{color:var(--green)}.dn{color:var(--red)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ptl{font-size:14px;font-weight:600;color:var(--text)}
+.pbody{padding:14px 16px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600}
+.tg{background:rgba(52,211,153,.15);color:var(--green)}
+.ty{background:rgba(251,191,36,.15);color:var(--yellow)}
+.tr{background:rgba(248,113,113,.15);color:var(--red)}
+.tb{background:rgba(56,189,248,.15);color:var(--accent3)}
+.tp{background:rgba(108,99,255,.15);color:var(--accent2)}
+.litem{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer}
+.litem:last-child{border-bottom:none}
+.litem:hover{background:rgba(255,255,255,.02);margin:0 -16px;padding:9px 16px}
+.liconw{font-size:18px;flex-shrink:0}
+.lmain{flex:1;min-width:0}
+.ltitle{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsub{font-size:11px;color:var(--muted2);margin-top:1px}
+.qitem{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.qitem:last-child{border-bottom:none}
+.qrank{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.r1{background:var(--red);color:#fff}.r2{background:var(--yellow);color:#000}.r3{background:var(--accent2);color:#fff}.rn{background:var(--surface2);color:var(--muted2)}
+.qbar{flex:1;height:4px;background:var(--surface3);border-radius:2px;margin:0 8px;position:relative}
+.qbarfill{position:absolute;left:0;top:0;height:100%;background:var(--accent);border-radius:2px}
+.qcnt{font-size:11px;color:var(--muted2);min-width:30px;text-align:right}
+.prog-item{margin-bottom:10px}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted2);margin-bottom:3px}
+.prog-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px}
+.upload-area{border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface)}
+.upload-area:hover{border-color:var(--accent);background:rgba(108,99,255,.04)}
+.uicon{font-size:32px;margin-bottom:8px}
+.utitle{font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px}
+.usub{font-size:13px;color:var(--muted2)}
+.funnel{display:flex;flex-direction:column;gap:8px}
+.fstep{display:flex;align-items:center;gap:10px}
+.flabel{width:80px;font-size:12px;color:var(--muted2);text-align:right;flex-shrink:0}
+.fbar-wrap{flex:1}
+.fbar{height:28px;border-radius:4px;display:flex;align-items:center;padding:0 10px;font-size:12px;color:#fff;font-weight:600}
+.fcnt{width:50px;font-size:12px;color:var(--muted2)}
+.steps{display:flex;gap:0;margin-bottom:28px}
+.step{flex:1;position:relative}
+.step-line{position:absolute;top:14px;left:50%;right:-50%;height:2px;background:var(--border);z-index:0}
+.step:last-child .step-line{display:none}
+.step-circle{width:28px;height:28px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;z-index:1}
+.sdone{background:var(--green);color:#fff}
+.sactive{background:var(--accent);color:#fff;box-shadow:0 0 0 4px rgba(108,99,255,.2)}
+.spending{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
+.step-label{font-size:11px;color:var(--muted2);text-align:center}
+.step-label.active{color:var(--accent2);font-weight:600}
+/* ── Obsidian Graph ── */
+#obsGraph{width:100%;height:480px;display:block;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 50%,#eef0fc 0%,#f4f6fb 100%);cursor:default}
+#obsGraph svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.g-node{cursor:pointer;transition:all .2s}
+.g-node circle.halo{transition:r .25s,opacity .25s;opacity:0}
+.g-node:hover circle.halo,.g-node.active circle.halo{opacity:1}
+.g-node circle.body{transition:r .2s,fill .2s,filter .2s}
+.g-node:hover circle.body{filter:brightness(1.35)}
+.g-node.active circle.body{filter:brightness(1.5)}
+.g-node text{pointer-events:none;user-select:none;font-family:'PingFang SC',Arial,sans-serif;font-weight:600;fill:#fff;text-anchor:middle;dominant-baseline:middle;transition:opacity .2s}
+.g-edge{transition:stroke .2s,stroke-opacity .2s,stroke-width .2s;stroke:#5b5bd6;stroke-opacity:.2;fill:none}
+.g-edge.active{stroke:#7c6ff7;stroke-opacity:.8;stroke-width:2px}
+.g-edge.dimmed{stroke-opacity:.04}
+.g-node.dimmed circle.body{opacity:.18}
+.g-node.dimmed text{opacity:.12}
+#gtt{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .15s;max-width:220px;z-index:9999;box-shadow:0 4px 20px rgba(91,91,214,.15)}
+#gtt .tttitle{font-weight:700;color:var(--accent);margin-bottom:3px}
+#gtt .ttsrc{font-size:11px;color:var(--green)}
+.chat-page{display:flex;height:calc(100vh - 52px)}
+.chatlist{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.clhead{padding:14px;border-bottom:1px solid var(--border)}
+.clsrch{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-size:13px;color:var(--text);outline:none}
+.clitem{display:flex;gap:10px;padding:11px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+.clitem:hover,.clitem.active{background:var(--surface2)}
+.ca{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.clname{font-size:13px;font-weight:600;color:var(--text)}
+.clprev{font-size:12px;color:var(--muted2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.cltime{font-size:11px;color:var(--muted)}
+.chatmain{flex:1;display:flex;flex-direction:column;min-width:0}
+.cmhead{padding:12px 18px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.cmmsgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:10px;max-width:76%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.mavatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.mbubble{padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.6}
+.msg.ai .mavatar{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.msg.ai .mbubble{background:var(--surface2);color:var(--text);border-bottom-left-radius:4px}
+.msg.user .mavatar{background:linear-gradient(135deg,var(--accent3),var(--green))}
+.msg.user .mbubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.msrc{margin-top:5px;padding:5px 9px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:6px;font-size:11px;color:var(--green);cursor:pointer;display:inline-block}
+.typing{display:flex;align-items:center;gap:4px;padding:10px 13px;background:var(--surface2);border-radius:12px;border-bottom-left-radius:4px;width:fit-content}
+.tdot{width:5px;height:5px;background:var(--muted2);border-radius:50%;animation:tp 1.2s infinite}
+.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
+@keyframes tp{0%,60%,100%{opacity:.3;transform:scale(1)}30%{opacity:1;transform:scale(1.2)}}
+.cinput-area{padding:14px 18px;background:var(--surface);border-top:1px solid var(--border)}
+.cinput-row{display:flex;gap:8px}
+.cinput{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:22px;padding:9px 16px;font-size:13px;color:var(--text);outline:none;font-family:var(--font);resize:none;transition:border-color .2s}
+.cinput:focus{border-color:var(--accent)}
+.csend{width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;flex-shrink:0;color:#fff}
+.csend:hover{background:var(--accent2);transform:scale(1.05)}
+.quick-qs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.qq{padding:5px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:18px;font-size:12px;color:var(--muted2);cursor:pointer;transition:all .15s}
+.qq:hover{border-color:var(--accent);color:var(--accent2);background:rgba(108,99,255,.07)}
+.wphone{width:260px;margin:0 auto;background:#1c1c1e;border-radius:36px;padding:8px;border:4px solid #333;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.wscreen{background:#ededed;border-radius:30px;overflow:hidden}
+.wnav{background:#f7f7f7;padding:9px 13px;display:flex;align-items:center;border-bottom:1px solid #ddd;gap:8px}
+.wtitle{flex:1;text-align:center;font-size:14px;font-weight:600;color:#000}
+.wmsgs{padding:10px;display:flex;flex-direction:column;gap:8px;background:#ededed;min-height:360px}
+.wcmsg{display:flex;gap:7px}
+.wcmsg.user{flex-direction:row-reverse}
+.wcav{width:30px;height:30px;border-radius:6px;background:#ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px}
+.wcbubble{max-width:170px;padding:7px 9px;border-radius:6px;font-size:11px;line-height:1.5}
+.wcmsg.ai .wcbubble{background:#fff;color:#000}
+.wcmsg.user .wcbubble{background:#07c160;color:#fff}
+.wcinput-area{background:#f7f7f7;border-top:1px solid #ddd;padding:7px 9px;display:flex;gap:5px;align-items:center}
+.wcinput{flex:1;background:#fff;border:1px solid #ddd;border-radius:4px;padding:4px 7px;font-size:11px;color:#333}
+#notification{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;color:var(--text);opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;box-shadow:0 4px 20px rgba(91,91,214,.15);max-width:280px}
+#notification.show{opacity:1;transform:translateY(0)}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:none;align-items:center;justify-content:center}
+.modal-ov.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:440px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(91,91,214,.15)}
+.mtitle{font-size:18px;font-weight:700;color:var(--accent);margin-bottom:3px}
+.mclose{float:right;cursor:pointer;font-size:17px;color:var(--muted2);margin-top:-2px}
+.mmeta{font-size:12px;color:var(--muted2);margin-bottom:14px}
+.mbody{font-size:13px;color:var(--muted);line-height:1.7}
+.msource{margin-top:13px;padding:9px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:7px;font-size:12px;color:var(--green)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ghead{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.gtool{padding:5px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--muted2);cursor:pointer;transition:all .15s}
+.gtool.active,.gtool:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tgbtn{padding:6px 13px;border-radius:18px;cursor:pointer;font-size:13px;background:var(--surface2);color:var(--muted2);border:1px solid var(--border);transition:all .2s}
+.tgbtn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="topnav">
+  <div class="logo">Know<span>Graph</span> <span style="font-size:11px;color:var(--muted2);font-weight:400;margin-left:4px">交互原型</span></div>
+  <div class="nav-tabs">
+    <div class="ntab active" onclick="switchView('b')">📊 博主控制台</div>
+    <div class="ntab" onclick="switchView('c')">💬 用户端模拟</div>
+    <div class="ntab" onclick="switchView('ob')">🚀 接入向导</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="font-size:12px;color:var(--green)">● 图谱在线</span>
+    <div class="avatar">鹿</div>
+  </div>
+</div>
+
+<!-- ═══ B端控制台 ═══ -->
+<div id="pB" class="page show">
+<div class="layout">
+<div class="sidebar">
+  <div class="stitle">工作台</div>
+  <div class="sitem active" onclick="showTab(this,'tDash')"><span>📊</span> 总览</div>
+  <div class="sitem" onclick="showTab(this,'tGraph')"><span>🕸️</span> 知识图谱</div>
+  <div class="sitem" onclick="showTab(this,'tContent')"><span>📁</span> 内容管理</div>
+  <div class="stitle">洞察</div>
+  <div class="sitem" onclick="showTab(this,'tInsights')"><span>💡</span> 用户洞察 <span class="sbadge">3</span></div>
+  <div class="sitem" onclick="showTab(this,'tFunnel')"><span>📈</span> 转化漏斗</div>
+  <div class="stitle">配置</div>
+  <div class="sitem" onclick="showTab(this,'tWechat')"><span>💚</span> 微信接入</div>
+</div>
+<div class="content">
+
+<!-- Dashboard -->
+<div id="tDash">
+  <div class="cheader">
+    <div><div class="ptitle">欢迎回来，小鹿学姐 👋</div><div class="psub">图谱上次更新：2小时前 · 今日新增 24 条问答记录</div></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-g btn-sm" onclick="notify('图谱重建中...','⚙️')">刷新图谱</button><button class="btn btn-p btn-sm" onclick="showTab(document.querySelectorAll('.sitem')[2],'tContent')">+ 上传内容</button></div>
+  </div>
+  <div class="stats">
+    <div class="scard"><div class="slabel">图谱节点总数</div><div class="sval">847</div><div class="schange up">↑ 63 本月新增</div></div>
+    <div class="scard"><div class="slabel">摄入内容时长</div><div class="sval">38.5<span style="font-size:14px;color:var(--muted2)">h</span></div><div class="schange up">↑ 6.2h 本月</div></div>
+    <div class="scard"><div class="slabel">本月用户问答</div><div class="sval">1,284</div><div class="schange up">↑ 23% 环比</div></div>
+    <div class="scard"><div class="slabel">预估节省咨询</div><div class="sval">14.2<span style="font-size:14px;color:var(--muted2)">h</span></div><div class="schange up">≈ ¥4,260 价值</div></div>
+  </div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="phead"><div class="ptl">本月高频问题 TOP 8</div><span class="tag ty">未覆盖 3 个</span></div>
+      <div class="pbody">
+        <div class="qitem"><div class="qrank r1">1</div><span style="flex:1;font-size:13px;color:var(--text)">GPA多少能申请到TOP30？</span><div class="qbar"><div class="qbarfill" style="width:100%"></div></div><div class="qcnt">238</div></div>
+        <div class="qitem"><div class="qrank r2">2</div><span style="flex:1;font-size:13px;color:var(--text)">文书第一稿什么时候开始？</span><div class="qbar"><div class="qbarfill" style="width:82%"></div></div><div class="qcnt">196</div></div>
+        <div class="qitem"><div class="qrank r3">3</div><span style="flex:1;font-size:13px;color:var(--text)">双非背景有没有机会？</span><div class="qbar"><div class="qbarfill" style="width:71%"></div></div><div class="qcnt">169</div></div>
+        <div class="qitem"><div class="qrank rn">4</div><span style="flex:1;font-size:13px;color:var(--text)">推荐信应该找几位老师？</span><div class="qbar"><div class="qbarfill" style="width:58%"></div></div><div class="qcnt">138</div></div>
+        <div class="qitem"><div class="qrank rn">5</div><span style="flex:1;font-size:13px;color:var(--text)">申请季什么时候开始准备？</span><div class="qbar"><div class="qbarfill" style="width:47%"></div></div><div class="qcnt">112</div></div>
+        <div class="qitem" style="border-top:1px dashed rgba(251,191,36,.3);padding-top:10px;margin-top:4px"><span style="font-size:13px">⚡</span><span style="flex:1;font-size:13px;color:var(--yellow)">CS转商科需要哪些材料？</span><span class="tag ty">待补充</span></div>
+        <div class="qitem"><span style="font-size:13px">⚡</span><span style="flex:1;font-size:13px;color:var(--yellow)">2025年申请政策新变化？</span><span class="tag ty">待补充</span></div>
+        <div class="qitem"><span style="font-size:13px">⚡</span><span style="flex:1;font-size:13px;color:var(--yellow)">Gap Year影响申请吗？</span><span class="tag ty">待补充</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="phead"><div class="ptl">最近摄入内容</div><span class="tag tg">全部完成</span></div>
+      <div class="pbody">
+        <div class="litem" onclick="notify('打开内容详情','📄')"><div class="liconw">🎬</div><div class="lmain"><div class="ltitle">英美TOP30申请策略专场 直播回放</div><div class="lsub">2h 34min · 87 节点 · 3天前</div></div><span class="tag tg">完成</span></div>
+        <div class="litem" onclick="notify('打开内容详情','📄')"><div class="liconw">🎬</div><div class="lmain"><div class="ltitle">文书写作技巧 第三讲</div><div class="lsub">1h 12min · 52 节点 · 5天前</div></div><span class="tag tg">完成</span></div>
+        <div class="litem" onclick="notify('打开内容详情','📄')"><div class="liconw">📄</div><div class="lmain"><div class="ltitle">双非背景逆袭申请指南.pdf</div><div class="lsub">32页 · 43 节点 · 7天前</div></div><span class="tag tg">完成</span></div>
+        <div class="litem"><div class="liconw">⚙️</div><div class="lmain"><div class="ltitle">选校逻辑深度讲解 直播回放</div><div class="lsub">上传处理中... 54%</div></div><div style="width:60px;background:var(--surface3);height:4px;border-radius:2px"><div style="width:54%;height:100%;background:var(--accent);border-radius:2px"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="phead"><div class="ptl">知识域覆盖率</div><button class="btn btn-g btn-sm" onclick="showTab(document.querySelectorAll('.sitem')[1],'tGraph')">查看完整图谱</button></div>
+    <div class="pbody">
+      <div class="three-col" style="margin-bottom:0">
+        <div>
+          <div class="prog-item"><div class="prog-label"><span>选校策略</span><span style="color:var(--accent2)">92%</span></div><div class="prog-bar"><div class="prog-fill" style="width:92%;background:var(--accent)"></div></div></div>
+          <div class="prog-item"><div class="prog-label"><span>文书写作</span><span style="color:var(--accent2)">85%</span></div><div class="prog-bar"><div class="prog-fill" style="width:85%;background:var(--accent2)"></div></div></div>
+        </div>
+        <div>
+          <div class="prog-item"><div class="prog-label"><span>推荐信准备</span><span style="color:var(--green)">74%</span></div><div class="prog-bar"><div class="prog-fill" style="width:74%;background:var(--green)"></div></div></div>
+          <div class="prog-item"><div class="prog-label"><span>签证准备</span><span style="color:var(--yellow)">48%</span></div><div class="prog-bar"><div class="prog-fill" style="width:48%;background:var(--yellow)"></div></div></div>
+        </div>
+        <div>
+          <div class="prog-item"><div class="prog-label"><span>GRE/GMAT备考</span><span style="color:var(--yellow)">35%</span></div><div class="prog-bar"><div class="prog-fill" style="width:35%;background:var(--yellow)"></div></div></div>
+          <div class="prog-item"><div class="prog-label"><span>CS转商科</span><span style="color:var(--red)">12%</span></div><div class="prog-bar"><div class="prog-fill" style="width:12%;background:var(--red)"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Graph Tab -->
+<div id="tGraph" style="display:none">
+  <div class="cheader">
+    <div><div class="ptitle">知识图谱</div><div class="psub">847 节点 · 1,203 关系 · 6 专场</div></div>
+    <div style="display:flex;gap:6px">
+      <div class="tgbtn active" id="fa" onclick="setF('all',this)">全部</div>
+      <div class="tgbtn" id="fs" onclick="setF('school',this)">学校</div>
+      <div class="tgbtn" id="fe" onclick="setF('essay',this)">文书</div>
+      <div class="tgbtn" id="fb" onclick="setF('bg',this)">背景</div>
+    </div>
+  </div>
+  <div class="panel" style="overflow:hidden">
+    <div class="ghead">
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:14px;font-weight:600;color:var(--text)">🕸️ 留学申请知识图谱</span>
+        <span style="font-size:12px;color:var(--muted2)"><span style="color:var(--accent2)">●</span> 学校 <span style="color:var(--green)">●</span> 策略 <span style="color:var(--yellow)">●</span> 背景 <span style="color:var(--pink)">●</span> 时间 <span style="color:var(--accent3)">●</span> 材料</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div class="gtool active">图谱视图</div>
+        <div class="gtool" onclick="notify('已切换列表视图','📋')">列表视图</div>
+        <div class="gtool" onclick="notify('图谱已导出','⬇️')">导出</div>
+      </div>
+    </div>
+    <div id="obsGraph"><svg id="obsSvg"></svg></div>
+  </div>
+  <div id="gtt"><div class="tttitle" id="ttn"></div><div id="ttt" style="font-size:11px;color:var(--muted2);margin-bottom:3px"></div><div class="ttsrc" id="tts"></div></div>
+</div>
+
+<!-- Content Tab -->
+<div id="tContent" style="display:none">
+  <div class="cheader"><div class="ptitle">内容管理</div><div style="display:flex;gap:8px"><span class="tag tp">视频 8</span><span class="tag tb">文档 4</span><span class="tag tg">图文 2</span></div></div>
+  <div class="upload-area" onclick="notify('请选择文件（视频/PDF/图文）','📁')" style="margin-bottom:16px">
+    <div class="uicon">📤</div><div class="utitle">拖拽或点击上传内容</div><div class="usub">支持 MP4/MOV 直播录像 · PDF/Word 文档 · 图文链接</div>
+  </div>
+  <div class="panel">
+    <div class="phead"><div class="ptl">已摄入内容</div></div>
+    <div class="pbody" style="padding:0">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:10px 16px;text-align:left;font-size:12px;color:var(--muted2);font-weight:600">内容名称</th>
+          <th style="padding:10px;font-size:12px;color:var(--muted2);font-weight:600">类型</th>
+          <th style="padding:10px;font-size:12px;color:var(--muted2);font-weight:600">图谱节点</th>
+          <th style="padding:10px;font-size:12px;color:var(--muted2);font-weight:600">状态</th>
+          <th style="padding:10px;font-size:12px;color:var(--muted2);font-weight:600">时间</th>
+          <th style="padding:10px"></th>
+        </tr></thead>
+        <tbody id="ctBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Insights Tab -->
+<div id="tInsights" style="display:none">
+  <div class="cheader"><div class="ptitle">用户洞察</div></div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="phead"><div class="ptl">问答满意度</div></div>
+      <div class="pbody" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="position:relative;width:120px;height:120px">
+          <svg width="120" height="120" style="transform:rotate(-90deg)">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface3)" stroke-width="14"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--green)" stroke-width="14" stroke-dasharray="196 314" stroke-linecap="round"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--yellow)" stroke-width="14" stroke-dasharray="63 314" stroke-dashoffset="-196" stroke-linecap="round"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--red)" stroke-width="14" stroke-dasharray="55 314" stroke-dashoffset="-259" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:24px;font-weight:800;color:#fff">78%</div><div style="font-size:11px;color:var(--muted2)">满意</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span><span style="color:var(--green)">●</span> 满意</span><strong>78%</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span><span style="color:var(--yellow)">●</span> 一般</span><strong>14%</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span><span style="color:var(--red)">●</span> 不满意</span><strong>8%</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="phead"><div class="ptl">⚡ 内容补充建议</div><span class="tag ty">3 个高优先</span></div>
+      <div class="pbody" style="display:flex;flex-direction:column;gap:10px">
+        <div style="padding:10px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--yellow);margin-bottom:3px">🔥 热度最高·无覆盖</div>
+          <div style="font-size:13px;color:var(--text)">「CS转商科申请材料清单」</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:3px">过去30天被问 89 次</div>
+          <button class="btn btn-g btn-sm" style="margin-top:7px" onclick="notify('已加入选题计划','✅')">+ 加入选题计划</button>
+        </div>
+        <div style="padding:10px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--yellow);margin-bottom:3px">🔥 询问快速上升</div>
+          <div style="font-size:13px;color:var(--text)">「2025年政策变化对申请影响」</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:3px">本月询问环比 +180%</div>
+          <button class="btn btn-g btn-sm" style="margin-top:7px" onclick="notify('已加入选题计划','✅')">+ 加入选题计划</button>
+        </div>
+        <div style="padding:10px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--yellow);margin-bottom:3px">📌 长期缺口</div>
+          <div style="font-size:13px;color:var(--text)">「Gap Year对申请的影响」</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:3px">连续3个月未回答TOP5</div>
+          <button class="btn btn-g btn-sm" style="margin-top:7px" onclick="notify('已加入选题计划','✅')">+ 加入选题计划</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Funnel Tab -->
+<div id="tFunnel" style="display:none">
+  <div class="cheader"><div class="ptitle">转化漏斗</div></div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="phead"><div class="ptl">本月转化漏斗</div></div>
+      <div class="pbody">
+        <div class="funnel">
+          <div class="fstep"><div class="flabel">视频号曝光</div><div class="fbar-wrap"><div class="fbar" style="width:100%;background:var(--accent)">100%</div></div><div class="fcnt">28,400</div></div>
+          <div class="fstep"><div class="flabel">进入问答</div><div class="fbar-wrap"><div class="fbar" style="width:65%;background:var(--accent2)">65%</div></div><div class="fcnt">1,284</div></div>
+          <div class="fstep"><div class="flabel">满意完成</div><div class="fbar-wrap"><div class="fbar" style="width:35%;background:var(--accent3)">35%</div></div><div class="fcnt">450</div></div>
+          <div class="fstep"><div class="flabel">点击预约</div><div class="fbar-wrap"><div class="fbar" style="width:12%;background:var(--green)">12%</div></div><div class="fcnt">54</div></div>
+          <div class="fstep"><div class="flabel">实际成交</div><div class="fbar-wrap"><div class="fbar" style="width:5%;background:var(--yellow)">5%</div></div><div class="fcnt">23</div></div>
+        </div>
+        <div style="margin-top:14px;padding:11px;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:8px;font-size:13px;color:var(--text)">本月增量咨询成交 <strong style="color:var(--green)">23 单</strong>，预估增量收入 <strong style="color:var(--green)">¥34,500</strong></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="phead"><div class="ptl">关键指标</div></div>
+      <div class="pbody" style="display:flex;flex-direction:column;gap:12px">
+        <div style="padding:12px;background:var(--surface2);border-radius:8px"><div style="font-size:12px;color:var(--muted2);margin-bottom:3px">AI首答满意率</div><div style="font-size:22px;font-weight:800;color:var(--green)">78%</div><div style="font-size:12px;color:var(--muted2)">行业均值约 60%，领先 18pp</div></div>
+        <div style="padding:12px;background:var(--surface2);border-radius:8px"><div style="font-size:12px;color:var(--muted2);margin-bottom:3px">图谱→预约转化率</div><div style="font-size:22px;font-weight:800;color:var(--accent2)">4.2%</div><div style="font-size:12px;color:var(--muted2)">目标 ≥ 5%，上月 3.1%</div></div>
+        <div style="padding:12px;background:var(--surface2);border-radius:8px"><div style="font-size:12px;color:var(--muted2);margin-bottom:3px">平均问答轮次</div><div style="font-size:22px;font-weight:800;color:var(--accent3)">4.7</div><div style="font-size:12px;color:var(--muted2)">用户粘性良好</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WeChat Tab -->
+<div id="tWechat" style="display:none">
+  <div class="cheader"><div class="ptitle">微信接入</div></div>
+  <div class="two-col">
+    <div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="phead"><div class="ptl">接入状态</div><span class="tag tg">● 已连接</span></div>
+        <div class="pbody" style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted2)">绑定服务号</span><strong>小鹿学姐留学服务号</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted2)">AI助理名称</span><strong>小鹿AI升学助理</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted2)">今日处理消息</span><strong style="color:var(--green)">84 条</strong></div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn btn-g btn-sm" onclick="notify('链接已复制','🔗')">复制助理链接</button>
+            <button class="btn btn-p btn-sm" onclick="switchView('c')">预览用户端</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="phead"><div class="ptl">回复策略</div></div>
+        <div class="pbody" style="display:flex;flex-direction:column;gap:12px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span>无法回答时引导预约咨询</span><div style="width:34px;height:18px;background:var(--green);border-radius:9px;cursor:pointer;position:relative"><div style="width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;right:2px;top:2px"></div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span>回答附带视频来源时间戳</span><div style="width:34px;height:18px;background:var(--green);border-radius:9px;cursor:pointer;position:relative"><div style="width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;right:2px;top:2px"></div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span>自动收集用户背景信息</span><div style="width:34px;height:18px;background:var(--surface3);border-radius:9px;cursor:pointer;position:relative" onclick="notify('设置已更新','✅')"><div style="width:14px;height:14px;background:var(--muted);border-radius:50%;position:absolute;left:2px;top:2px"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:13px;color:var(--muted2);margin-bottom:12px;text-align:center">📱 用户在微信中看到的效果</div>
+      <div class="wphone"><div class="wscreen">
+        <div class="wnav"><span style="color:#07c160;font-size:13px">‹</span><div class="wtitle">小鹿AI升学助理</div></div>
+        <div class="wmsgs">
+          <div class="wcmsg ai"><div class="wcav">🤖</div><div class="wcbubble">你好！我是小鹿学姐的AI升学助理 👋 可以问我任何留学问题～</div></div>
+          <div class="wcmsg user"><div class="wcav">🙋</div><div class="wcbubble">双非背景能申NYU吗？</div></div>
+          <div class="wcmsg ai"><div class="wcav">🤖</div><div><div class="wcbubble">完全可以！关键看：GPA≥3.5、亮点实习、文书突出<div style="font-size:10px;color:#07c160;margin-top:3px">📹 来源：选校策略专场 23:15</div></div></div></div>
+        </div>
+        <div class="wcinput-area"><div class="wcinput">发消息...</div><div style="background:#07c160;border-radius:4px;padding:3px 7px;font-size:11px;color:#fff">发送</div></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /layout -->
+</div><!-- /pB -->
+
+<!-- ═══ C端用户 ═══ -->
+<div id="pC" class="page">
+<div class="chat-page">
+  <div class="chatlist">
+    <div class="clhead"><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px">💬 博主AI助理</div><input class="clsrch" placeholder="搜索博主..." /></div>
+    <div>
+      <div class="clitem active" onclick="selBlogger(this,'lulu')">
+        <div class="ca" style="background:linear-gradient(135deg,#5b5bd6,#7c6ff7)">🦌</div>
+        <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between"><div class="clname">小鹿AI升学助理</div><div class="cltime">刚刚</div></div><div class="clprev">完全可以！小鹿学姐讲过...</div></div>
+      </div>
+      <div class="clitem" onclick="selBlogger(this,'mark')">
+        <div class="ca" style="background:linear-gradient(135deg,#0ea5e9,#10b981)">👔</div>
+        <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between"><div class="clname">Mark 职场AI助理</div><div class="cltime">昨天</div></div><div class="clprev">大厂面试一般分三轮...</div></div>
+      </div>
+      <div class="clitem" onclick="selBlogger(this,'mengmeng')">
+        <div class="ca" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">📚</div>
+        <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between"><div class="clname">萌萌考证AI助手</div><div class="cltime">2天前</div></div><div class="clprev">CPA审计这章考点较多...</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="chatmain">
+    <div class="cmhead">
+      <div class="ca" id="cmAvatar" style="background:linear-gradient(135deg,#5b5bd6,#7c6ff7)">🦌</div>
+      <div>
+        <div id="cmName" style="font-size:14px;font-weight:600;color:var(--text)">小鹿AI升学助理</div>
+        <div style="font-size:12px;color:var(--green)">● 在线 · 基于小鹿学姐知识图谱</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-g btn-sm" onclick="notify('查看知识图谱（开发中）','🕸️')">查看图谱</button>
+        <button class="btn btn-p btn-sm" onclick="notify('已打开预约日历','📅')">预约咨询</button>
+      </div>
+    </div>
+    <div class="cmmsgs" id="chatMsgs">
+      <div class="msg ai"><div class="mavatar">🦌</div><div class="mbubble">你好！我是小鹿学姐的AI升学助理 🎓<br><br>我掌握了学姐 <strong>38小时</strong>的直播内容，涵盖选校、文书、推荐信等核心话题。有什么问题直接问吧～</div></div>
+    </div>
+    <div class="cinput-area">
+      <div class="quick-qs">
+        <div class="qq" onclick="sendQ(this)">双非能申请TOP30吗？</div>
+        <div class="qq" onclick="sendQ(this)">GPA 3.5能去哪些学校？</div>
+        <div class="qq" onclick="sendQ(this)">文书什么时候开始写？</div>
+        <div class="qq" onclick="sendQ(this)">推荐信怎么找老师？</div>
+      </div>
+      <div class="cinput-row">
+        <textarea class="cinput" id="chatInp" rows="1" placeholder="输入问题..."></textarea>
+        <button class="csend" onclick="sendMsg()">→</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ 接入向导 ═══ -->
+<div id="pOb" class="page">
+<div style="max-width:660px;margin:50px auto 40px;padding:0 20px">
+  <h1 style="font-size:26px;font-weight:800;color:#fff;margin-bottom:6px">🚀 快速接入向导</h1>
+  <p style="color:var(--muted2);margin-bottom:28px">跟着步骤，5 分钟完成 KnowGraph 接入</p>
+  <div class="steps">
+    <div class="step"><div class="step-line"></div><div class="step-circle sdone">✓</div><div class="step-label active">注册账号</div></div>
+    <div class="step"><div class="step-line"></div><div class="step-circle sdone">✓</div><div class="step-label">填写信息</div></div>
+    <div class="step"><div class="step-line"></div><div class="step-circle sactive">3</div><div class="step-label active">上传内容</div></div>
+    <div class="step"><div class="step-line"></div><div class="step-circle spending">4</div><div class="step-label">接入微信</div></div>
+    <div class="step"><div class="step-circle spending">5</div><div class="step-label">完成 🎉</div></div>
+  </div>
+  <div class="panel" style="margin-bottom:16px">
+    <div class="phead"><div class="ptl">步骤 3：上传你的第一个内容</div><span class="tag tp">进行中</span></div>
+    <div class="pbody">
+      <p style="color:var(--muted);margin-bottom:14px;font-size:13px">建议从播放量最高的直播开始，让图谱尽快覆盖核心知识。<strong style="color:var(--text)">留学博主</strong>可上传选校/文书专场，<strong style="color:var(--text)">职场博主</strong>可上传面试/晋升专场，<strong style="color:var(--text)">考证博主</strong>可上传核心考点讲解。</p>
+      <div class="upload-area" onclick="notify('请选择直播视频文件','📁')" style="margin-bottom:12px">
+        <div class="uicon">🎬</div><div class="utitle">上传直播录像</div><div class="usub">MP4 / MOV · 最大 20GB</div>
+      </div>
+      <div style="text-align:center;color:var(--muted2);font-size:13px;margin-bottom:10px">或</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="upload-area" onclick="notify('粘贴视频号链接','🔗')"><div class="uicon">📱</div><div class="utitle">视频号链接</div><div class="usub">直播回放 / 短视频</div></div>
+        <div class="upload-area" onclick="notify('上传PDF/Word文档','📄')"><div class="uicon">📄</div><div class="utitle">上传文档</div><div class="usub">PDF / Word / 公众号</div></div>
+      </div>
+      <div style="margin-top:18px;display:flex;justify-content:space-between">
+        <button class="btn btn-g" onclick="notify('返回上一步','⬅️')">← 上一步</button>
+        <button class="btn btn-p" onclick="notify('已提交，图谱构建约15分钟完成','⚙️')">提交处理 →</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="phead"><div class="ptl">💡 新手提示</div></div>
+    <div class="pbody" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:10px;font-size:13px;color:var(--muted)"><span style="color:var(--green)">①</span> 建议上传<strong style="color:var(--text)">至少3场直播</strong>，图谱才有足够密度覆盖核心知识域（留学/职场/考证各有侧重）。</div>
+      <div style="display:flex;gap:10px;font-size:13px;color:var(--muted)"><span style="color:var(--green)">②</span> 图谱构建完成后邮件通知，<strong style="color:var(--text)">平均处理时间 15-30 分钟</strong>。</div>
+      <div style="display:flex;gap:10px;font-size:13px;color:var(--muted)"><span style="color:var(--green)">③</span> 上线后在视频号主页添加 AI 助理入口，<strong style="color:var(--text)">引导粉丝先问图谱</strong>再私信你。</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Notification -->
+<div id="notification"></div>
+
+<!-- Node Modal -->
+<div class="modal-ov" id="nodeModal" onclick="closeM(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <span class="mclose" onclick="document.getElementById('nodeModal').classList.remove('show')">✕</span>
+    <div class="mtitle" id="mTitle">哈佛大学</div>
+    <div class="mmeta" id="mMeta">节点类型：学校 · 英美TOP30申请策略</div>
+    <div class="mbody" id="mBody">哈佛大学是美国顶尖研究型大学，小鹿学姐在专场中重点分析了其录取偏好和申请策略，强调综合背景评估超过单一GPA指标。</div>
+    <div class="msource" id="mSrc">📹 来源：英美TOP30申请策略专场 · 第18分34秒</div>
+    <div style="margin-top:13px;display:flex;gap:8px">
+      <button class="btn btn-g btn-sm" onclick="notify('跳转直播片段','▶️');closeModal()">▶ 查看片段</button>
+      <button class="btn btn-p btn-sm" onclick="notify('已基于此节点发起提问','💬');closeModal()">💬 基于此节点提问</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Utils ──
+function notify(msg,icon='✅'){
+  const el=document.getElementById('notification');
+  el.innerHTML=`<span style="margin-right:6px">${icon}</span>${msg}`;
+  el.classList.add('show');
+  clearTimeout(window._nt);
+  window._nt=setTimeout(()=>el.classList.remove('show'),2600);
+}
+function switchView(v){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  const m={'b':'pB','c':'pC','ob':'pOb'};
+  const ti={'b':0,'c':1,'ob':2};
+  document.getElementById(m[v]).classList.add('show');
+  document.querySelectorAll('.ntab')[ti[v]].classList.add('active');
+  if(v==='b'){const g=document.getElementById('tGraph');if(g&&g.style.display!=='none')setTimeout(initObsGraph,80);}
+}
+function showTab(el,id){
+  document.querySelectorAll('.sitem').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.querySelectorAll('.content>div').forEach(d=>d.style.display='none');
+  const t=document.getElementById(id);if(t)t.style.display='block';
+  if(id==='tGraph')setTimeout(initObsGraph,80);
+  if(id==='tContent')renderCT();
+}
+function closeModal(){document.getElementById('nodeModal').classList.remove('show');}
+function closeM(e){if(e.target===document.getElementById('nodeModal'))closeModal();}
+
+// ── Content Table ──
+const ctData=[
+  {n:'英美TOP30申请策略专场 直播回放',t:'🎬 视频',nd:87,s:'done',d:'3天前'},
+  {n:'文书写作技巧 第三讲',t:'🎬 视频',nd:52,s:'done',d:'5天前'},
+  {n:'双非背景逆袭申请指南.pdf',t:'📄 PDF',nd:43,s:'done',d:'7天前'},
+  {n:'2025申请时间轴图解',t:'🖼️ 图文',nd:28,s:'done',d:'9天前'},
+  {n:'推荐信避坑指南 直播回放',t:'🎬 视频',nd:61,s:'done',d:'12天前'},
+  {n:'选校逻辑深度讲解',t:'🎬 视频',nd:0,s:'proc',d:'刚刚'},
+];
+function renderCT(){
+  const tb=document.getElementById('ctBody');if(!tb)return;
+  tb.innerHTML=ctData.map(r=>`<tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:10px 16px;font-size:13px;color:var(--text)">${r.n}</td>
+    <td style="padding:10px;font-size:12px;color:var(--muted2)">${r.t}</td>
+    <td style="padding:10px;font-size:13px;color:var(--accent2)">${r.nd||'—'}</td>
+    <td style="padding:10px">${r.s==='done'?'<span class="tag tg">完成</span>':'<span class="tag ty">处理中</span>'}</td>
+    <td style="padding:10px;font-size:12px;color:var(--muted2)">${r.d}</td>
+    <td style="padding:10px"><button class="btn btn-g btn-sm" onclick="notify('查看详情','📄')">详情</button></td>
+  </tr>`).join('');
+}
+
+// ── Obsidian-style Knowledge Graph ──
+const GC={school:'#7c6ff7',strategy:'#10b981',bg:'#f59e0b',time:'#e879a0',material:'#0ea5e9'};
+
+// 节点：固定坐标，Obsidian 辐射状布局
+// 以"选校策略"为中心，各专场向外辐射
+const GN=[
+  // 核心枢纽
+  {id:0, l:'选校策略',   ty:'strategy', x:500, y:260, r:28, src:'英美选校策略专场'},
+  {id:1, l:'文书写作',   ty:'strategy', x:260, y:180, r:24, src:'文书写作第三讲'},
+  {id:2, l:'推荐信',     ty:'material', x:740, y:180, r:22, src:'推荐信避坑指南'},
+  {id:3, l:'申请时间线', ty:'time',     x:500, y:120, r:20, src:'时间轴图解'},
+  {id:4, l:'双非背景',   ty:'bg',       x:200, y:320, r:20, src:'双非逆袭指南'},
+  // 学校节点
+  {id:5, l:'哈佛',       ty:'school',   x:440, y:380, r:19, src:'英美选校策略 18:34'},
+  {id:6, l:'哥伦比亚',   ty:'school',   x:560, y:380, r:18, src:'英美选校策略 22:10'},
+  {id:7, l:'NYU',        ty:'school',   x:630, y:320, r:17, src:'英美选校策略 35:20'},
+  {id:8, l:'UCLA',       ty:'school',   x:370, y:420, r:16, src:'选校逻辑 8:45'},
+  {id:9, l:'USC',        ty:'school',   x:630, y:420, r:15, src:'选校逻辑 12:30'},
+  // 细分节点
+  {id:10,l:'GPA要求',    ty:'bg',       x:310, y:380, r:16, src:'英美选校策略 45:10'},
+  {id:11,l:'GT成绩',     ty:'bg',       x:730, y:300, r:14, src:'英美选校策略 52:00'},
+  {id:12,l:'文书主题',   ty:'material', x:140, y:180, r:15, src:'文书写作第三讲'},
+  {id:13,l:'背景提升',   ty:'strategy', x:310, y:200, r:16, src:'选校策略专场'},
+  {id:14,l:'套磁信',     ty:'material', x:820, y:220, r:14, src:'推荐信专场'},
+  {id:15,l:'10月截止',   ty:'time',     x:380, y:120, r:14, src:'时间轴图解'},
+  {id:16,l:'12月截止',   ty:'time',     x:620, y:120, r:14, src:'时间轴图解'},
+  {id:17,l:'转专业',     ty:'bg',       x:150, y:400, r:14, src:'双非逆袭指南'},
+  {id:18,l:'科研实习',   ty:'bg',       x:200, y:460, r:14, src:'双非逆袭指南'},
+  {id:19,l:'冲刺匹配保底',ty:'strategy',x:500, y:460, r:16, src:'选校策略专场'},
+];
+const GE=[
+  [0,1],[0,2],[0,3],[0,5],[0,6],[0,7],[0,13],[0,19],
+  [1,4],[1,10],[1,12],[1,13],
+  [2,11],[2,14],
+  [3,15],[3,16],
+  [4,10],[4,17],[4,18],
+  [5,10],[5,8],[6,10],[7,11],
+  [8,10],[9,11],[5,6],[8,9],
+  [13,4],[19,5],[19,6],[19,8],[19,9],
+];
+
+// 节点详情数据
+const GD={
+  0:{title:'选校策略',meta:'节点类型：策略 · 英美选校策略专场',body:'选校策略是整个申请的核心决策。学姐讲解了冲刺/匹配/保底三档配置原则，以及如何根据个人背景动态调整选校名单，强调选校要匹配自身实力区间。',src:'📹 英美选校策略专场 · 全程贯穿'},
+  1:{title:'文书写作',meta:'节点类型：策略 · 文书写作专场',body:'文书写作需要围绕"为什么是你"构建核心叙事。学姐强调用具体故事替代抽象品质描述，每段文字都要服务于整体主题，避免流水账式写法。',src:'📹 文书写作技巧第三讲 · 8:20'},
+  2:{title:'推荐信',meta:'节点类型：材料 · 推荐信避坑指南',body:'推荐信是申请中最容易被忽视却至关重要的材料。学姐详解了如何选择推荐人、提前几个月联系、主动提供素材包，以及如何避免"客套话"推荐信的坑。',src:'📹 推荐信避坑指南专场 · 全程'},
+  4:{title:'双非背景',meta:'节点类型：背景 · 双非逆袭指南',body:'双非背景并不是申请TOP30的障碍，关键是通过优质实习、科研、竞赛来弥补学校标签不足，文书需要更有力地呈现个人独特性和成长轨迹。',src:'📹 双非背景逆袭申请指南 · 全文'},
+  5:{title:'哈佛大学',meta:'节点类型：学校 · 英美TOP30申请策略',body:'哈佛大学录取评估全面，不以GPA为单一标准，课外活动和文书质量同等重要。学姐分析了哈佛偏好有"使命感"的申请者，建议文书讲清"为什么是哈佛"。',src:'📹 英美TOP30申请策略专场 · 18:34'},
+  10:{title:'GPA要求',meta:'节点类型：背景要求 · 英美选校策略',body:'各校对GPA要求不同，TOP10一般期望3.7+，TOP30区间3.5+。但学姐强调GPA是门槛而非决定因素，背景亮点和文书质量往往更关键。',src:'📹 英美选校策略专场 · 45:10'},
+  19:{title:'冲刺匹配保底',meta:'节点类型：策略 · 选校策略专场',body:'学姐的黄金选校公式：2-3所冲刺（申请成功率<30%）+ 3-4所匹配（50-70%）+ 2所保底（>85%）。配比根据背景强弱调整，不建议all-in冲刺。',src:'📹 选校策略专场 · 28:00'},
+};
+
+let gActiveNode=null, gFilter='all', gPan={x:0,y:0}, gZoom=1;
+let gIsDragging=false, gLastMouse={x:0,y:0};
+let gObsInited=false;
+
+function initObsGraph(){
+  const wrap=document.getElementById('obsGraph');
+  const svg=document.getElementById('obsSvg');
+  if(!wrap||!svg)return;
+  // 避免重复绑定
+  if(!gObsInited){
+    gObsInited=true;
+    wrap.addEventListener('mousedown',onGPanStart);
+    wrap.addEventListener('wheel',onGWheel,{passive:false});
+    document.addEventListener('mousemove',onGPanMove);
+    document.addEventListener('mouseup',onGPanEnd);
+  }
+  renderObsGraph();
+}
+
+function renderObsGraph(){
+  const svg=document.getElementById('obsSvg');
+  if(!svg)return;
+  const wrap=document.getElementById('obsGraph');
+  const W=wrap.offsetWidth||900, H=wrap.offsetHeight||480;
+
+  // 计算节点中心偏移以居中
+  const cx=W/2, cy=H/2;
+  // 图谱数据中心约 x=490 y=300，做偏移居中
+  const offX=cx-490, offY=cy-290;
+
+  const transform=`translate(${gPan.x+offX},${gPan.y+offY}) scale(${gZoom})`;
+
+  const vis=n=>gFilter==='all'||n.ty===gFilter;
+  const edgeActive=e=>{
+    if(!gActiveNode)return false;
+    return e[0]===gActiveNode||e[1]===gActiveNode;
+  };
+  const nodeAdj=id=>{
+    if(!gActiveNode)return true;
+    if(id===gActiveNode)return true;
+    return GE.some(e=>(e[0]===id&&e[1]===gActiveNode)||(e[1]===id&&e[0]===gActiveNode));
+  };
+
+  svg.innerHTML=`
+  <defs>
+    ${GN.map(n=>{
+      const c=GC[n.ty]||'#888';
+      return `<radialGradient id="halo${n.id}" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="${c}" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
+      </radialGradient>`;
+    }).join('')}
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g id="gRoot" transform="${transform}">
+    <!-- Edges -->
+    <g id="gEdges">
+    ${GE.map(([a,b],i)=>{
+      const na=GN[a],nb=GN[b];
+      const active=edgeActive([a,b]);
+      const visE=(vis(na)&&vis(nb));
+      const dimmed=gActiveNode!==null&&!active;
+      // 贝塞尔曲线：控制点偏移，产生 Obsidian 弧形连线
+      const mx=(na.x+nb.x)/2, my=(na.y+nb.y)/2;
+      const dx=nb.x-na.x, dy=nb.y-na.y;
+      const len=Math.sqrt(dx*dx+dy*dy)||1;
+      // 法向偏移量（曲率）
+      const curv=len*0.12;
+      const cpx=mx-dy/len*curv, cpy=my+dx/len*curv;
+      const strokeW=active?2.5:1;
+      const strokeOp=!visE?0.03:dimmed?0.04:active?0.9:0.2;
+      const strokeCol=active?'#7c6ff7':'#5b5bd6';
+      return `<path class="g-edge${active?' active':''}${dimmed?' dimmed':''}"
+        d="M${na.x},${na.y} Q${cpx},${cpy} ${nb.x},${nb.y}"
+        stroke="${strokeCol}" stroke-opacity="${strokeOp}"
+        stroke-width="${strokeW}" fill="none" stroke-linecap="round"
+        style="transition:stroke-opacity .25s,stroke-width .25s"/>`;
+    }).join('')}
+    </g>
+    <!-- Nodes -->
+    <g id="gNodes">
+    ${GN.map(n=>{
+      const c=GC[n.ty]||'#888';
+      const isActive=n.id===gActiveNode;
+      const adj=nodeAdj(n.id);
+      const visN=vis(n);
+      const dimmed=gActiveNode!==null&&!adj;
+      const bodyR=isActive?n.r*1.15:n.r;
+      const haloR=isActive?n.r*2.6:n.r*2.0;
+      const bodyOp=!visN?0.12:dimmed?0.15:1;
+      const textOp=!visN?0.08:dimmed?0.12:1;
+      const fs=Math.max(9,n.r*0.52);
+      const labelText=n.l.length>5?n.l.slice(0,4)+'…':n.l;
+      return `<g class="g-node${isActive?' active':''}" 
+          data-id="${n.id}"
+          onmouseenter="onGNodeHover(event,${n.id})"
+          onmouseleave="onGNodeLeave()"
+          onclick="onGNodeClick(event,${n.id})">
+        <!-- Halo -->
+        <circle cx="${n.x}" cy="${n.y}" r="${haloR}"
+          fill="url(#halo${n.id})"
+          opacity="${isActive?0.9:adj&&gActiveNode!==null?0.5:0}"
+          style="transition:opacity .25s,r .25s"/>
+        <!-- Body -->
+        <circle cx="${n.x}" cy="${n.y}" r="${bodyR}"
+          fill="${c}" fill-opacity="${bodyOp*0.85}"
+          stroke="${c}" stroke-width="${isActive?2.5:1.5}"
+          stroke-opacity="${bodyOp}"
+          style="transition:r .2s,fill-opacity .25s,stroke-opacity .25s;${isActive?'filter:url(#glow)':''}"/>
+        <!-- Label inside node -->
+        <text x="${n.x}" y="${n.y}" font-size="${fs}"
+          fill="#fff" fill-opacity="${textOp}"
+          text-anchor="middle" dominant-baseline="middle"
+          style="transition:fill-opacity .25s;pointer-events:none;font-family:PingFang SC,Arial,sans-serif;font-weight:700">
+          ${labelText}
+        </text>
+        ${n.l.length>1?`<!-- Label below for readability -->
+        <text x="${n.x}" y="${n.y+n.r+11}" font-size="10.5"
+          fill="${c}" fill-opacity="${textOp*0.9}"
+          text-anchor="middle"
+          style="transition:fill-opacity .25s;pointer-events:none;font-family:PingFang SC,Arial,sans-serif;font-weight:600">
+          ${n.l.length>7?n.l.slice(0,6)+'…':n.l}
+        </text>`:''}
+      </g>`;
+    }).join('')}
+    </g>
+  </g>`;
+}
+
+function onGNodeHover(e,id){
+  e.stopPropagation();
+  const n=GN[id];if(!n)return;
+  const tt=document.getElementById('gtt');
+  tt.style.opacity=1;
+  tt.style.left=(e.clientX+14)+'px';
+  tt.style.top=(e.clientY-8)+'px';
+  document.getElementById('ttn').textContent=n.l;
+  document.getElementById('ttt').textContent='类型：'+{school:'学校',strategy:'策略',bg:'背景',time:'时间',material:'材料'}[n.ty];
+  document.getElementById('tts').textContent='📹 '+n.src;
+}
+function onGNodeLeave(){
+  document.getElementById('gtt').style.opacity=0;
+}
+function onGNodeClick(e,id){
+  e.stopPropagation();
+  if(gActiveNode===id){
+    // 再次点击：打开详情弹窗
+    const d=GD[id]||{title:GN[id].l,meta:`节点类型：${GN[id].ty}`,body:`${GN[id].l}是知识图谱中的重要节点。`,src:`📹 来源：${GN[id].src}`};
+    document.getElementById('mTitle').textContent=d.title;
+    document.getElementById('mMeta').textContent=d.meta;
+    document.getElementById('mBody').textContent=d.body;
+    document.getElementById('mSrc').textContent=d.src;
+    document.getElementById('nodeModal').classList.add('show');
+    return;
+  }
+  gActiveNode=id;
+  renderObsGraph();
+}
+// 点击空白取消高亮
+document.addEventListener('click',function(e){
+  if(e.target.closest('#obsGraph')&&!e.target.closest('.g-node')){
+    gActiveNode=null;renderObsGraph();
+  }
+});
+
+// Pan
+function onGPanStart(e){
+  if(e.target.closest('.g-node'))return;
+  gIsDragging=true;
+  gLastMouse={x:e.clientX,y:e.clientY};
+}
+function onGPanMove(e){
+  if(!gIsDragging)return;
+  gPan.x+=e.clientX-gLastMouse.x;
+  gPan.y+=e.clientY-gLastMouse.y;
+  gLastMouse={x:e.clientX,y:e.clientY};
+  renderObsGraph();
+}
+function onGPanEnd(){gIsDragging=false;}
+function onGWheel(e){
+  e.preventDefault();
+  const delta=e.deltaY>0?0.9:1.1;
+  gZoom=Math.min(Math.max(gZoom*delta,0.3),3);
+  renderObsGraph();
+}
+
+function setF(f,el){
+  gFilter=f;
+  document.querySelectorAll('.tgbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderObsGraph();
+}
+
+// ── Chat ──
+const aiResponses={
+  'lulu':[
+    {q:'双非能申请TOP30吗？',a:'完全可以！小鹿学姐在专场中专门讲过这个，双非背景并不是硬性劣势。关键三点：① GPA ≥ 3.5，② 有含金量的实习/科研，③ 文书突出个人独特故事。她有好几位学员是双非985逆袭的。',src:'📹 双非背景逆袭指南 · 全文'},
+    {q:'GPA 3.5能去哪些学校？',a:'3.5的GPA在英美申请是中等偏上水平。学姐的建议是：\n\n🎯 冲刺：哥伦比亚、NYU（GPA不是唯一标准）\n✅ 匹配：USC、BU、Northeastern\n🛡️ 保底：UMass、Fordham\n\n当然还要结合你的专业和其他背景综合评估。',src:'📹 英美选校策略专场 · 第35分钟'},
+    {q:'文书什么时候开始写？',a:'学姐强烈建议：<br><br>📅 <strong>9月开始构思</strong>——确定核心故事<br>📅 <strong>10月完成初稿</strong>——第一稿宜早不宜晚<br>📅 <strong>11月反复打磨</strong>——改5-8稿很正常<br>📅 <strong>12月提交</strong>——大多数学校截止日\n\n不要等到11月才开始，那时候会非常被动。',src:'📹 文书写作技巧第三讲 · 开篇'},
+    {q:'推荐信怎么找老师？',a:'学姐建议找推荐信的优先级：\n\n1️⃣ 和你有过深度互动的教授（如论文指导）\n2️⃣ 你成绩最好的课程老师\n3️⃣ 实习/研究项目的主管\n\n最好提前2-3个月联系，给对方充足时间，并主动提供你的经历总结和申请目标。',src:'📹 推荐信避坑指南 · 全程'},
+  ],
+  'mark':[
+    {q:'大厂面试流程',a:'Mark 老师在专场中详细拆解了大厂面试流程：\n\n📋 一面：算法/基础技术（重点刷题、八股文）\n📋 二面：系统设计（核心！要能说清楚架构取舍）\n📋 三面：交叉面（考察综合能力和协作思维）\n📋 HR面：薪资谈判、背景核查\n\n关键：每轮准备侧重点不同，不要一刀切。',src:'📹 大厂面试全流程拆解 · 第12分钟'},
+    {q:'如何写出好简历',a:'Mark 老师的简历法则：\n\n✅ 用数字量化每一条经历（提升X%、负责Y人团队）\n✅ 技能栏只写熟悉的，别写"了解"级别的\n✅ 项目描述用STAR法则：背景→任务→行动→结果\n✅ 一页纸原则（5年以内经验）\n\n最常见的错误是写成流水账，要写成结果账。',src:'📹 简历写作工作坊 · 全程'},
+    {q:'怎么谈薪资',a:'Mark 老师说谈薪三步骤：\n\n1️⃣ 先做功课：查清楚目标岗位的市场薪资区间（offer letter之前不报数字）\n2️⃣ 拿到offer后再谈：此时你的谈判筹码最大\n3️⃣ 谈判话术："我对这个机会很感兴趣，根据我的经验和市场行情，期望能到X-Y区间，请问是否有调整空间？"\n\n不要怕谈，90%的HR都预留了谈判空间。',src:'📹 薪资谈判实战课 · 第8分钟'},
+  ],
+  'mengmeng':[
+    {q:'CPA审计怎么学',a:'萌萌老师在直播中说，审计这科建议这样攻克：\n\n📖 第一轮：以理解为主，不要死记概念（审计流程逻辑很重要）\n📖 第二轮：做近5年真题，找出高频考点（风险评估和内控必考）\n📖 考前冲刺：重点背审计报告格式和强调段措辞\n\n审计是逻辑科目，理解了就不难。',src:'📹 CPA审计备考策略专场 · 第15分钟'},
+    {q:'法考怎么备考',a:'萌萌老师的法考备考路线：\n\n🗓️ 主观题（10月）先通过，打基础\n🗓️ 客观题（8月）大题量刷题\n\n重点科目推荐学习顺序：刑法→民法→行政法→商经知→理论法\n\n萌萌老师强调：不要一开始就刷题，先听课建立框架，否则做题也是懵的。',src:'📹 法考备考全攻略 · 第22分钟'},
+  ],
+};
+let chatCtx='lulu';
+function selBlogger(el,ctx){
+  document.querySelectorAll('.clitem').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  chatCtx=ctx;
+  const names={'lulu':'小鹿AI升学助理','mark':'Mark 职场AI助理','mengmeng':'萌萌考证AI助手'};
+  const emojis={'lulu':'🦌','mark':'👔','mengmeng':'📚'};
+  const subs={'lulu':'基于小鹿学姐知识图谱','mark':'基于Mark老师职场知识图谱','mengmeng':'基于萌萌考证知识图谱'};
+  const intros={'lulu':'你好！我是小鹿学姐的AI升学助理 🎓<br><br>我掌握了学姐 <strong>38小时</strong>的直播内容，涵盖选校、文书、推荐信等核心话题。有什么问题直接问吧～','mark':'你好！我是Mark老师的职场AI助理 💼<br><br>我掌握了Mark老师 <strong>200+期</strong>的节目内容，涵盖面试、简历、薪资谈判等核心话题。有什么职场问题直接问吧～','mengmeng':'你好！我是萌萌老师的考证AI助手 📚<br><br>我掌握了萌萌老师 <strong>150+场</strong>的直播内容，涵盖CPA、法考、建造师等考点讲解。有什么备考问题直接问吧～'};
+  const quickQs={'lulu':['双非能申请TOP30吗？','GPA 3.5能去哪些学校？','文书什么时候开始写？','推荐信怎么找老师？'],'mark':['大厂面试流程是什么？','如何写出好简历？','怎么和HR谈薪资？','互联网裁员了怎么办？'],'mengmeng':['CPA审计怎么学？','法考怎么备考？','考证需要多久时间？','建造师难度如何？']};
+  const hints={'lulu':'输入留学问题...','mark':'输入职场问题...','mengmeng':'输入备考问题...'};
+  document.getElementById('cmName').textContent=names[ctx]||ctx;
+  document.getElementById('cmAvatar').textContent=emojis[ctx]||'🤖';
+  document.querySelector('.cmhead div:nth-child(2) div:last-child').textContent='● 在线 · '+(subs[ctx]||'');
+  const msgs=document.getElementById('chatMsgs');
+  msgs.innerHTML=`<div class="msg ai"><div class="mavatar">${emojis[ctx]||'🤖'}</div><div class="mbubble">${intros[ctx]||'你好！有什么可以帮你的？'}</div></div>`;
+  // Update quick questions
+  const qqArea=document.querySelector('.quick-qs');
+  if(qqArea&&quickQs[ctx]){
+    qqArea.innerHTML=quickQs[ctx].map(q=>`<div class="qq" onclick="sendQ(this)">${q}</div>`).join('');
+  }
+  // Update placeholder
+  const cinput=document.getElementById('chatInp');
+  if(cinput)cinput.placeholder=hints[ctx]||'输入问题...';
+}
+function sendQ(el){
+  document.getElementById('chatInp').value=el.textContent;
+  sendMsg();
+}
+function sendMsg(){
+  const inp=document.getElementById('chatInp');
+  const q=inp.value.trim();if(!q)return;
+  inp.value='';
+  const msgs=document.getElementById('chatMsgs');
+  const emojis={'lulu':'🦌','mark':'👔','mengmeng':'📚'};
+  const avatar=emojis[chatCtx]||'🤖';
+  msgs.innerHTML+=`<div class="msg user"><div class="mavatar">😊</div><div class="mbubble">${q}</div></div>`;
+  // typing
+  const typingId='typing_'+Date.now();
+  msgs.innerHTML+=`<div class="msg ai" id="${typingId}"><div class="mavatar">${avatar}</div><div class="typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  const responses=aiResponses[chatCtx]||[];
+  const match=responses.find(r=>q.includes(r.q.slice(0,6)));
+  setTimeout(()=>{
+    const typingEl=document.getElementById(typingId);
+    if(typingEl)typingEl.remove();
+    let ans,src='';
+    if(match){ans=match.a;src=match.src;}
+    else{
+      const fallbacks=['这个问题图谱里暂时没有详细覆盖，建议直接预约博主的付费咨询，他们会针对你的情况给出专属建议～','这个问题很好！我在图谱中找到了一些相关内容，不过要给你最准确的答案，还是建议预约一对一咨询哦。','图谱里有相关话题，但你的情况需要结合具体背景分析，建议点击"预约咨询"让博主亲自为你解答。'];
+      ans=fallbacks[Math.floor(Math.random()*fallbacks.length)];
+      src='';
+    }
+    const srcHtml=src?`<div class="msrc" onclick="notify('跳转直播片段','▶️')">${src}</div>`:'';
+    msgs.innerHTML+=`<div class="msg ai"><div class="mavatar">${avatar}</div><div><div class="mbubble">${ans.replace(/\n/g,'<br>')}</div>${srcHtml}</div></div>`;
+    msgs.scrollTop=msgs.scrollHeight;
+  },1400);
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey&&document.activeElement.id==='chatInp'){e.preventDefault();sendMsg();}
+});
+
+// ── Init ──
+document.querySelectorAll('.content>div').forEach((d,i)=>{d.style.display=i===0?'block':'none'});
+</script>
+</body>
+</html>
